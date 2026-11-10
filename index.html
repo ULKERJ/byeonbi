@@ -1,0 +1,206 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>개인화 퍼셉트론 배변 기록 v9 · 유산균 잔여량</title><style>
+:root{font-family:system-ui,'Apple SD Gothic Neo',sans-serif;color:#1e293b;background:#f4f7fb}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:auto;padding:22px}header{display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:23px}h2{font-size:19px;margin-top:0}.card{background:white;border:1px solid #dce4ef;border-radius:16px;padding:20px;margin:15px 0;box-shadow:0 5px 20px #23375b0b}input,select,textarea,button{font:inherit;border-radius:9px;padding:10px;border:1px solid #b8c5d6;max-width:100%}input,select{width:100%}button{cursor:pointer;background:#2849b8;color:white;border:0}button.secondary{background:#e8edfb;color:#2344a6}button.danger{background:#aa3847}button:disabled{opacity:.5;cursor:wait}label{display:block;font-weight:650;font-size:14px;margin:10px 0 5px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.muted{color:#65748b;font-size:13px}.hidden{display:none!important}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.tabs button{background:#e9eef9;color:#26427c}.tabs button.active{background:#2849b8;color:#fff}.result{padding:14px;border-radius:12px;background:#eef3ff;margin:15px 0}.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}.day{min-height:84px;border:1px solid #dce4ef;border-radius:9px;padding:7px;cursor:pointer;background:#fff;font-size:12px;overflow-wrap:anywhere}.day.blank{background:#f5f7fa;cursor:default}.day.has{background:#e9f5f0;border-color:#b1d9c9}.day strong{display:block;font-size:15px}.day small{display:block}.calhead{text-align:center;font-size:12px;font-weight:700;padding:5px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e1e8f1}th{background:#f4f7fb}.scroll{overflow:auto}.pill{background:#eef3ff;border-radius:20px;padding:5px 10px;font-size:12px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar input{width:auto}.error{color:#a72d3d}.ok{color:#087a59}.info{background:#fff7e6;border:1px solid #f2d59b;padding:12px;border-radius:10px;font-size:13px}.section{display:none}.section.show{display:block}.factors{margin-top:12px;border-top:1px solid #c8d6ef;padding-top:12px}.factors ul{margin:7px 0;padding-left:20px}.factors li{margin:6px 0}.factors .hint{color:#54657f;font-size:12px;line-height:1.6}.factors b{color:#244391}@media(max-width:650px){.grid{grid-template-columns:1fr}.day{min-height:68px;padding:4px;font-size:10px}.day strong{font-size:13px}main{padding:12px}}
+
+.chart-wrap{overflow-x:auto;background:#fbfcff;border:1px solid #e1e8f1;border-radius:12px;padding:9px}.chart-wrap svg{display:block;width:100%;min-width:300px;height:auto}.dose-item{padding:10px;border-bottom:1px solid #e5eaf2;display:flex;align-items:center;justify-content:space-between;gap:10px}.dose-item button{white-space:nowrap}.metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.metric{background:#f1f5ff;padding:12px;border-radius:10px}.metric small{display:block;color:#63748b}.metric strong{display:block;overflow-wrap:anywhere;font-size:16px;margin-top:4px}@media(max-width:650px){.metric-grid{grid-template-columns:1fr}}
+</style></head><body><main><header><div><h1>배변 건강 · 개인화 퍼셉트론</h1><div class="muted">개인 기록과 학습 가중치를 클라우드에 동기화</div></div><div id="who" class="muted"></div></header>
+<div id="setup" class="card hidden"><h2>클라우드 연결 설정 필요</h2><p>Firebase 연결 정보는 입력됐어. 이제 파일 안의 <code>ADMIN_UID</code>를 관리자 계정의 실제 UID로 바꾸고 HTTPS로 배포해 줘.</p><p class="muted">설정 방법은 함께 제공한 README 파일에 있어.</p></div>
+<section id="login" class="card hidden" style="max-width:460px;margin:35px auto"><h2>로그인</h2><label>아이디</label><input id="loginId" autocomplete="username" placeholder="등록된 아이디 또는 관리자 이메일"><label>비밀번호</label><input id="loginPw" type="password" autocomplete="current-password"><p><button id="loginBtn">로그인</button></p><p id="loginMsg" class="error"></p><p class="muted">최초 관리자 계정은 Firebase에서 아이디 <b>admin</b>으로 생성해야 해. 아이디만으로 접속하는 방식은 개인정보 보호에 적합하지 않아 비밀번호를 추가했어.</p></section>
+<div id="app" class="hidden"><div class="toolbar"><span id="currentUser" class="pill"></span><button id="logout" class="secondary">로그아웃</button></div><div class="tabs"><button data-tab="record" class="active">오늘 기록</button><button data-tab="calendar">월별 추이</button><button data-tab="weights">개인별 가중치</button><button data-tab="probiotic">유산균 잔여량</button><button data-tab="admin" id="adminTab" class="hidden">관리자</button></div>
+<section id="record" class="section show"><div class="card"><h2>일별 생활 습관 · 배변 기록</h2><p class="info">입력 방식 변경: 채소·과일·운동은 오늘 실시 여부(0/1), 수면은 3~8시간을 0.1~0.5로 표현합니다. 이전 버전의 섭취 빈도 기록은 자동 변환하지 않으며 새 기준으로 다시 입력해 저장해야 합니다.</p><p class="info">오늘의 분석은 <b>어제 배변 유무</b>를 먼저 확인하고, <b>그제의 생활 습관 → 어제 배변 유무</b> 한 쌍으로 개인 가중치를 갱신한 뒤 <b>오늘 입력한 생활 습관</b>을 분류합니다. 어제 배변 기록이 없으면 분석하지 않습니다.</p><div class="grid"><div><label>기록 날짜</label><input id="date" type="date"></div><div><label for="water">하루 물 섭취량 (L)</label><input id="water" type="number" min="0" max="5" step="0.1" value="1.5" inputmode="decimal" placeholder="예: 1.8"><div class="muted">예: 1.2 = 1.2L · 기존 학습 데이터는 1.0/1.5/2.0L만 포함</div></div><div><label>오늘 녹색 잎채소를 섭취했나요?</label><select id="veg"><option value="0">섭취하지 않음 (0)</option><option value="1">섭취함 (1)</option></select></div><div><label>오늘 과일을 섭취했나요?</label><select id="fruit"><option value="0">섭취하지 않음 (0)</option><option value="1">섭취함 (1)</option></select></div><div><label>하루 수면 시간</label><select id="sleep"><option value="0.1">3시간 이상 ~ 4시간 미만 (0.1)</option><option value="0.2">4시간 이상 ~ 5시간 미만 (0.2)</option><option value="0.3">5시간 이상 ~ 6시간 미만 (0.3)</option><option value="0.4">6시간 이상 ~ 7시간 미만 (0.4)</option><option value="0.5">7시간 이상 ~ 8시간 이하 (0.5)</option></select><div class="muted">8시간은 마지막 구간(0.5)에 포함돼요.</div></div><div><label>오늘 운동했나요?</label><select id="exercise"><option value="0">운동하지 않음 (0)</option><option value="1">운동함 (1)</option></select></div><div><label>이 날짜에 실제로 배변했나요?</label><select id="bowel"><option value="">미입력</option><option value="1">배변함</option><option value="0">배변하지 않음</option></select><div class="muted">이 날짜의 배변 여부는 다음 날 모델을 학습할 때 사용합니다. 이 날짜의 실제 배변 여부를 오늘 분석에 미리 사용하지 않습니다.</div></div><div><label>메모 (선택)</label><input id="memo" maxlength="250" placeholder="예: 복용 약 변경, 복통 등"></div></div><div id="prediction" class="result" aria-live="polite"></div><p class="muted">어제의 실제 배변 기록을 사용하여 가중치를 갱신한 후, 오늘 습관에 대한 실험적 분류를 <b>“변비 발생 가능성을 높이는/낮추는 방향”</b>으로 표시합니다. 이 표현은 의학적 확률이나 인과관계가 아닙니다.</p><div class="toolbar"><button id="save">기록 저장</button><button id="delete" class="danger">해당 날짜 삭제</button><span id="saveMsg" class="muted"></span></div><p class="info">⚠️ <b>하루 배변하지 않았다고 변비인 것은 아닙니다.</b> 원래 공통 가중치는 주 단위 섭취 빈도와 ‘변비 유무’ 데이터로 학습되었으나, 현재는 하루 섭취 유무와 ‘다음 날 배변 유무’를 사용합니다. 입력 정의와 정답이 모두 달라 초기 가중치의 타당성은 보장되지 않습니다. 모델의 “높이는/낮추는 방향” 표시는 실제 건강 위험을 증감시킨다는 뜻이 아닙니다. 학습률은 1로 고정되어 있으므로 입력값에 따라 가중치가 크게 바뀔 수 있습니다. 분류 정확도는 검증되지 않았습니다. 과거 입력 형식의 기록은 학습에서 제외하고, 재입력 후 저장한 날부터 새 기준으로 사용합니다. 의학적 진단·발생 확률이 아니며, 물 섭취량 1~2L 이외의 입력값은 원래 학습 범위를 벗어납니다.</p></div></section>
+<section id="calendar" class="section"><div class="card"><div class="toolbar"><button id="prev" class="secondary">◀</button><h2 id="monthLabel" style="margin:0"></h2><button id="next" class="secondary">▶</button></div><p class="muted">날짜를 누르면 수정할 수 있어. 달력의 모델 판단은 <b>해당 날짜보다 이전 기록만 학습한 가중치</b>를 사용하며, 어제 배변 기록이 없으면 결과를 표시하지 않습니다.</p><div class="calendar" id="calendarGrid"></div><h3>이번 달 기록 요약</h3><div id="monthSummary"></div></div></section>
+<section id="weights" class="section"><div class="card"><h2>내 퍼셉트론 가중치</h2><p class="muted">각 사용자마다 공통 가중치 [1.5, −6, 0, 1, −1, 0]에서 시작합니다. 입력 방식이 변경되어 기존 가중치의 예측 성능은 별도로 재검증해야 합니다. 날짜 D의 <b>배변 유무</b>를 정답으로, <b>전날(D-1)의 생활 습관</b>을 입력값으로 시간순 학습합니다. 전날에 생활 습관 기록이 있고 다음 날 배변 여부가 입력되어야 한 쌍이 완성됩니다. 수정 또는 삭제하면 기존 기록을 기준으로 다시 계산해 중복 학습을 막습니다.</p><div class="scroll"><table><thead><tr><th>입력변수</th><th>공통 가중치</th><th>개인 가중치</th></tr></thead><tbody id="weightRows"></tbody></table></div><p id="weightInfo" class="muted"></p><p class="info"><b>학습 규칙: 기본 퍼셉트론 (학습률 1)</b><br>오분류 또는 경계에 있을 때 <code>w ← w + y·x</code>로 갱신합니다. 날짜 D의 실제 배변 여부는 날짜 D−1의 생활 습관으로 학습합니다. 사용자마다 서로 다른 가중치를 갖습니다.</p><p class="info">학습률 1에서는 가중치 변화가 커질 수 있고, 개인별 기록이 적으면 불안정해질 수 있어. 가중치의 부호를 생활 습관의 원인이나 치료 지침으로 해석하지 마.</p></div></section>
+<section id="probiotic" class="section"><div class="card"><h2>유산균 잔여량 · 96시간 시뮬레이션</h2><p class="info"><b>교육용 수학 모델</b> · 실제 장내 생존균 수를 측정하거나 예측한 값이 아닙니다. 입력한 섭취 균수와 시각으로 계산한 가상 잔여량입니다. 복용 안전성이나 제품 효과의 근거로 사용하지 마세요.</p>
+<div class="grid"><div><label for="doseAt">섭취한 날짜와 시간</label><input id="doseAt" type="datetime-local"></div><div><label for="doseCount">처음 섭취한 균수 N (CFU)</label><input id="doseCount" type="number" min="1" step="any" inputmode="decimal" value="1000000000" placeholder="예: 1000000000"></div></div><p class="muted">CFU는 제품에 표시된 생균수 단위입니다. 제품 표시에 있는 숫자를 입력하세요. 단, 표시 균수가 실제 장내 전달량과 같다는 뜻은 아닙니다.</p><div class="toolbar"><button id="doseSave">섭취 기록 추가</button><span id="doseMsg" class="muted" aria-live="polite"></span></div>
+<h3>섭취 기록</h3><div id="doseList" class="muted">아직 기록이 없습니다.</div></div>
+<div class="card"><h2>그래프 ① 한 번 섭취 후 0~12시간</h2><p class="muted">선택한 섭취 기록 1건의 시간별 예상 잔여 균수입니다. <b>0~4시간</b>과 <b>4~12시간</b> 구간의 식을 사용합니다.</p><label for="doseSelect">그래프로 볼 섭취 기록</label><select id="doseSelect"><option value="">섭취 기록 없음</option></select><div id="doseChart" class="chart-wrap"></div><p id="doseChartInfo" class="muted"></p></div>
+<div class="card"><h2>그래프 ② 여러 번 섭취한 유산균의 예상 잔여량 합계</h2><p class="muted">각 섭취 시점에 새로운 균수를 더하고, 이전 섭취분의 남은 양은 각각 96시간까지 감소시킨 뒤 합합니다. <b>12~96시간은 직선 감소</b>하며, 섭취 96시간 후 해당 섭취분은 0입니다.</p><div id="doseMetrics" class="metric-grid"></div><div id="totalDoseChart" class="chart-wrap"></div><p id="totalDoseInfo" class="muted"></p><p class="info">⚠️ 해당 그래프는 사용자 입력과 가정한 식으로 만든 <b>수학적 시뮬레이션</b>입니다. 실제 유산균 잔존 기간, 장 점막 정착, 변비 개선 효과를 보여주지 않습니다.</p></div></section>
+<section id="admin" class="section"><div class="card"><h2>사용자 계정 추가</h2><div class="grid"><div><label>새 아이디 (영문·숫자·_·-)</label><input id="newId" placeholder="user01"></div><div><label>초기 비밀번호 (6자 이상)</label><input id="newPw" type="password" autocomplete="new-password"></div></div><p><button id="createUser">사용자 등록</button></p><p id="adminMsg" class="muted"></p><h3>등록된 사용자</h3><div id="userList"></div><p class="info">관리자는 새 계정을 만들 수 있지만 사용자의 건강 기록을 자동으로 열람하지 않아. Firebase Authentication에서 최초 관리자 계정을 만들고 보안 규칙을 적용해야 해.</p></div></section>
+</div></main>
+<script>
+(function(){
+ const setup=document.getElementById('setup');
+ const show=(message)=>{setup.classList.remove('hidden');setup.innerHTML='<h2>Firebase 연결 안내</h2><p>'+message+'</p><p><a href="https://console.firebase.google.com/project/byeonbi/overview">Firebase 프로젝트 열기</a></p>'};
+ if(location.protocol==='file:'){
+   show('갤럭시에서 HTML 파일을 직접 열면 Firebase 모듈이나 인증이 차단되어 로그인할 수 없습니다. 동일한 HTML을 HTTPS 주소로 배포해 접속하거나, 별도로 제공된 오프라인 버전을 사용해 주세요.');
+ }
+ window.addEventListener('error',(event)=>{ if(event.target && event.target.tagName==='SCRIPT' || /module|import|firebase/i.test(event.message||''))show('Firebase 코드를 불러오지 못했습니다. 인터넷 연결 또는 HTTPS 배포 주소를 확인해 주세요.'); },true);
+ window.addEventListener('unhandledrejection',()=>{if(document.getElementById('app').classList.contains('hidden')&&document.getElementById('login').classList.contains('hidden'))show('Firebase 초기화에 실패했습니다. HTTPS에서 다시 접속하고 인증 설정을 확인해 주세요.');});
+})();
+</script>
+<script type="module">
+import {initializeApp,deleteApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword,setPersistence,browserLocalPersistence} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import {getFirestore,doc,setDoc,getDoc,collection,onSnapshot,deleteDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+// 아래 Firebase 프로젝트 설정을 본인의 값으로 변경
+const firebaseConfig={
+  apiKey: "AIzaSyDZcMJGUf3O7uvA2BZz7fU3y-6upnyGuiI",
+  authDomain: "byeonbi.firebaseapp.com",
+  projectId: "byeonbi",
+  storageBucket: "byeonbi.firebasestorage.app",
+  messagingSenderId: "174873699662",
+  appId: "1:174873699662:web:5007ca347a3c67b5f16a1f",
+  measurementId: "G-7SH5H6YWWX"
+};
+// Firebase 콘솔에서 만든 admin 계정의 UID. firestore.rules의 ADMIN_UID와 동일하게 설정
+const ADMIN_UID='I9EcXo9VMnNCElM41z3yRg5xcTS2';
+const BASE=[1.5,-6,0,1,-1,0]; const SCHEMA_VERSION=2; const LABELS=['물 섭취량(L)','녹색 잎채소 섭취 유무(0/1)','과일 섭취 유무(0/1)','수면 시간 구간(0.1~0.5)','운동 유무(0/1)','bias'];
+const $=id=>document.getElementById(id); const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const email=id=>`${id.toLowerCase()}@tracker.example`; const validId=id=>/^[a-zA-Z0-9_-]{3,32}$/.test(id); const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let auth,db,me,profile={},records={},doses={},unsubRecord=null,unsubProfile=null,unsubUsers=null,unsubDose=null,month=new Date(),tab='record';
+// 0~4h: N*0.64^(t/2); 4~12h: M*0.47^(t/4-1); 12~96h: straight line to 0.
+const F4=Math.pow(0.64,2), F12=F4*Math.pow(0.47,2);
+function remainingFrac(t){
+ if(!Number.isFinite(t)||t<0||t>96)return 0;
+ if(t<=4)return Math.pow(0.64,t/2);
+ if(t<=12)return F4*Math.pow(0.47,t/4-1);
+ return F12*(96-t)/84;
+}
+function numeric(n){if(!Number.isFinite(n))return '—';if(n===0)return '0';if(Math.abs(n)>=1e7)return n.toExponential(3);return new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2}).format(n)}
+function localDateTime(ms){const d=new Date(ms);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`}
+function datetimeInputValue(d=new Date()){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function doseEntries(){return Object.entries(doses).map(([id,d])=>({id,atMs:Number(d.atMs),count:Number(d.count)})).filter(d=>Number.isFinite(d.atMs)&&Number.isFinite(d.count)&&d.count>0).sort((a,b)=>a.atMs-b.atMs)}
+function estimateTotal(atMs,entries){return entries.reduce((sum,d)=>sum+d.count*remainingFrac((atMs-d.atMs)/3600000),0)}
+function chartSvg(points,{xLabels=[],maxY=null}={}){
+ const W=740,H=270,L=84,R=22,T=20,B=49,plotW=W-L-R,plotH=H-T-B;
+ if(!points.length)return '<div class="muted" style="padding:22px">섭취 기록을 추가하면 그래프가 표시됩니다.</div>';
+ const xmin=points[0][0],xmax=points[points.length-1][0],ymax=Math.max(1,maxY??Math.max(...points.map(p=>p[1]))*1.08);
+ const xx=v=>L+plotW*(v-xmin)/Math.max(1e-9,xmax-xmin), yy=v=>T+plotH*(1-v/ymax);
+ const path=points.map((p,i)=>`${i?'L':'M'}${xx(p[0]).toFixed(2)},${yy(p[1]).toFixed(2)}`).join(' ');
+ const grid=[0,.25,.5,.75,1].map(r=>`<line x1="${L}" x2="${W-R}" y1="${yy(ymax*r)}" y2="${yy(ymax*r)}" stroke="#e3e9f2"/><text x="${L-8}" y="${yy(ymax*r)+4}" font-size="11" text-anchor="end" fill="#61718a">${numeric(ymax*r)}</text>`).join('');
+ const ticks=xLabels.map(([v,label])=>`<line x1="${xx(v)}" x2="${xx(v)}" y1="${H-B}" y2="${H-B+5}" stroke="#9aa9bd"/><text x="${xx(v)}" y="${H-B+21}" font-size="11" text-anchor="middle" fill="#61718a">${esc(label)}</text>`).join('');
+ const area=path+` L${xx(xmax)},${yy(0)} L${xx(xmin)},${yy(0)} Z`;
+ return `<svg role="img" aria-label="예상 잔여 유산균 수 변화 그래프" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"><text x="${L}" y="12" fill="#60718a" font-size="11">예상 잔여량 (CFU, 수학 모델)</text>${grid}<line x1="${L}" x2="${L}" y1="${T}" y2="${H-B}" stroke="#9eacc0"/><line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="#9eacc0"/><path d="${area}" fill="#4f80d6" fill-opacity=".10"/><path d="${path}" fill="none" stroke="#3269bb" stroke-width="2.5" stroke-linejoin="round"/>${ticks}</svg>`;
+}
+function renderDoses(){
+ const entries=doseEntries(),sel=$('doseSelect'),prev=sel.value;
+ sel.innerHTML=entries.length?entries.map(d=>`<option value="${esc(d.id)}">${esc(localDateTime(d.atMs))} · ${esc(numeric(d.count))} CFU</option>`).join(''):'<option value="">섭취 기록 없음</option>';
+ if(entries.some(d=>d.id===prev))sel.value=prev;
+ $('doseList').innerHTML=entries.length?entries.slice().reverse().map(d=>`<div class="dose-item"><span>${esc(localDateTime(d.atMs))}<br><small class="muted">${esc(numeric(d.count))} CFU</small></span><button class="danger" data-delete-dose="${esc(d.id)}" type="button">삭제</button></div>`).join(''):'<p class="muted">아직 기록이 없습니다.</p>';
+ $('doseList').querySelectorAll('[data-delete-dose]').forEach(b=>b.onclick=async()=>{if(!me||!confirm('이 유산균 섭취 기록을 삭제할까?'))return;try{await deleteDoc(doc(db,'users',me.uid,'probioticDoses',b.dataset.deleteDose));$('doseMsg').textContent='섭취 기록 삭제 완료'}catch(e){$('doseMsg').textContent='삭제 실패: '+e.message}});
+ const chosen=entries.find(d=>d.id===sel.value);
+ if(chosen){
+   const pts=Array.from({length:121},(_,i)=>{const t=i/10;return [t,chosen.count*remainingFrac(t)]});
+   $('doseChart').innerHTML=chartSvg(pts,{xLabels:[[0,'0h'],[4,'4h'],[8,'8h'],[12,'12h']]});
+   $('doseChartInfo').textContent=`N = ${numeric(chosen.count)} CFU · 4시간 M = ${numeric(chosen.count*F4)} CFU · 12시간 잔여량 = ${numeric(chosen.count*F12)} CFU`;
+ }else{$('doseChart').innerHTML=chartSvg([]);$('doseChartInfo').textContent='';}
+ if(!entries.length){$('doseMetrics').innerHTML='';$('totalDoseChart').innerHTML=chartSvg([]);$('totalDoseInfo').textContent='';return}
+ const start=entries[0].atMs, end=Math.max(Date.now(),entries[entries.length-1].atMs)+96*3600000;
+ // Every dose has exactly a 96h lifetime in this mathematical model.
+ const span=end-start,steps=Math.min(1400,Math.max(200,Math.ceil(span/3600000)*4));
+ const times=new Set(Array.from({length:steps+1},(_,i)=>start+span*i/steps));
+ for(const d of entries){times.add(d.atMs);times.add(d.atMs+4*3600000);times.add(d.atMs+12*3600000);times.add(d.atMs+96*3600000);times.add(d.atMs-60000)}
+ const pts=[...times].filter(t=>t>=start&&t<=end).sort((a,b)=>a-b).map(t=>[t,estimateTotal(t,entries)]);
+ const ticks=Array.from({length:5},(_,i)=>{const t=start+span*i/4;return [t,localDateTime(t).slice(5,16)]});
+ $('totalDoseChart').innerHTML=chartSvg(pts,{xLabels:ticks});
+ const total=entries.reduce((s,d)=>s+d.count,0),now=estimateTotal(Date.now(),entries),active=entries.filter(d=>Date.now()>=d.atMs&&Date.now()-d.atMs<96*3600000).length;
+ $('doseMetrics').innerHTML=`<div class="metric"><small>총 입력 섭취량</small><strong>${esc(numeric(total))} CFU</strong></div><div class="metric"><small>현재 예상 잔여량</small><strong>${esc(numeric(now))} CFU</strong></div><div class="metric"><small>최근 96시간 내 섭취 건수</small><strong>${active}건</strong></div>`;
+ $('totalDoseInfo').textContent=`전체 ${entries.length}건을 합산 · x축: 실제 날짜/시간 · 각 섭취분은 96시간 후 0으로 계산 · 현재 시각 ${localDateTime(Date.now())} 기준. 미래 섭취 기록은 현재 잔여량에서 제외됩니다.`;
+}
+function feature(r){return [Number(r.water),Number(r.veg),Number(r.fruit),Number(r.sleep),Number(r.exercise),1]}
+function score(w,r){return w.reduce((a,v,i)=>a+v*feature(r)[i],0)}
+function shiftDate(date,delta){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+delta);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+// 기준 날짜 이전의 정답만 학습하므로 미래 기록이 예측에 유입되지 않습니다.
+function trained(cutoffDate=null){
+  const w=[...BASE];let updates=0,labeled=0,unpaired=0;
+  for(const date of Object.keys(records).sort()){
+    if(cutoffDate && date>cutoffDate)break;
+    const current=records[date];
+    if(current.bowel!==0&&current.bowel!==1)continue;
+    const prev=records[shiftDate(date,-1)];
+    if(!prev||!hasFeatures(prev)){unpaired++;continue}
+    labeled++;
+    const y=current.bowel===0?1:-1;
+    const x=feature(prev),z=score(w,prev);
+    if(z*y<=0){for(let i=0;i<w.length;i++)w[i]+=y*x[i];updates++}
+  }
+  return {w,updates,labeled,unpaired};
+}
+// 선택 날짜 D의 판단에는 D-1일 배변 유무와 D-2일 생활 습관의 학습 쌍이 필수입니다.
+function modelForDate(date){
+  const yesterday=shiftDate(date,-1),before=shiftDate(date,-2);
+  const outcome=records[yesterday];
+  if(!outcome || (outcome.bowel!==0&&outcome.bowel!==1)){
+    return {error:`${yesterday} (전날)의 배변 유무가 입력되지 않았습니다. 월별 추이에서 해당 날짜를 눌러 “배변함/배변하지 않음”을 입력하고 저장해 주세요.`};
+  }
+  if(!hasFeatures(records[before])){
+    return {error:`${before} (그제)의 생활 습관 입력값이 없습니다. 전날 배변 여부를 전날의 결과로 학습하려면 그제 생활 습관 기록도 필요합니다. 해당 날짜를 입력·저장해 주세요.`};
+  }
+  const t=trained(yesterday);
+  return {...t, yesterday, before};
+}
+function hasFeatures(r){return r?.schemaVersion===SCHEMA_VERSION && ['water','veg','fruit','sleep','exercise'].every(k=>r[k]!==null&&r[k]!==undefined&&r[k]!==''&&Number.isFinite(Number(r[k]))) && Number(r.water)>=0 && Number(r.water)<=5 && ['veg','fruit','exercise'].every(k=>Number(r[k])===0||Number(r[k])===1) && [0.1,0.2,0.3,0.4,0.5].some(v=>Math.abs(Number(r.sleep)-v)<1e-9)}
+function values(){return {schemaVersion:SCHEMA_VERSION,water:$('water').value===''?NaN:Number($('water').value),veg:Number($('veg').value),fruit:Number($('fruit').value),sleep:Number($('sleep').value),exercise:Number($('exercise').value),bowel:$('bowel').value===''?null:Number($('bowel').value),memo:$('memo').value.trim()}}
+function factorAnalysis(w,r,s){
+  const x=feature(r);
+  const names=['물 섭취량','녹색 잎채소 섭취 유무','과일 섭취 유무','수면 시간 구간','운동 유무'];
+  // 편향은 생활 습관이 아니므로 비교에서 제외함. 각 변수의 기여도 w_i * x_i를 한번에 하나씩 뺌.
+  if(s<0)return '<div class="factors"><b>분류 전환 요인 분석</b><p class="muted">현재 모델에서는 낮추는 방향으로 분류되어, 분류 전환 요인 제거 분석을 표시하지 않습니다.</p></div>';
+  const candidates=[];
+  for(let i=0;i<5;i++){
+    const contribution=w[i]*x[i];
+    const without=s-contribution;
+    if(without < -1e-10){
+      candidates.push({name:names[i],contribution,without});
+    }
+  }
+  if(!candidates.length)return '<div class="factors"><b>분류 전환 요인 분석</b><p class="muted">한 가지 요인의 기여도를 제거하는 것만으로는 낮추는 방향으로 분류가 바뀌지 않았습니다.</p></div>';
+  candidates.sort((a,b)=>b.contribution-a.contribution);
+  return `<div class="factors"><b>분류를 바꾸는 요인 ${candidates.length}개</b><p class="muted">각 요인의 <b>가중치 × 입력값</b>을 전체 점수에서 하나씩 빼고 다시 분류했어.</p><ul>${candidates.map(c=>`<li><b>${c.name}</b> · 기여도 +${c.contribution.toFixed(3)} 제거 시 점수 ${c.without.toFixed(3)} → <b>낮추는 방향</b></li>`).join('')}</ul><div class="hint">⚠️ 위 항목은 <b>모델에서 분류를 바꾸는 수학적 요인</b>야. 기여도를 제거하는 계산은 실제로 그 습관을 줄이거나 없애는 행동과 같지 않아. 특히 물·수면 등이 <b>부족하다는 근거가 아니며</b>, 이 결과만으로 섭취량이나 수면을 줄이지 마.</div></div>`;
+}
+function directionText(s){return s>=0?'변비 발생 가능성을 높이는 방향':'변비 발생 가능성을 낮추는 방향'}
+function predict(){
+  const date=$('date').value||today(),r=values();
+  if(date>today()){$('prediction').innerHTML='<b class="error">미래 날짜는 분석할 수 없습니다.</b>';return}
+  if(!hasFeatures(r)){$('prediction').innerHTML='<b class="error">물 섭취량과 생활 습관 입력값을 확인해 주세요.</b>';return}
+  const t=modelForDate(date);
+  if(t.error){$('prediction').innerHTML=`<b class="error">분석 보류 · 이전 기록 필요</b><p>${esc(t.error)}</p><p class="muted">배변 기록을 입력하기 전에는 초기 가중치만으로 결과를 표시하지 않습니다.</p>`;return}
+  const s=score(t.w,r);
+  $('prediction').innerHTML=`<b>${esc(date)} · ${directionText(s)}</b><p class="muted">전날(${esc(t.yesterday)})의 배변 결과를 학습에 반영한 개인 가중치를 오늘 입력값에 적용했습니다. 퍼셉트론 점수 z = ${s.toFixed(3)} · 학습 쌍 ${t.labeled}개, 갱신 ${t.updates}회</p><p class="muted">이 분류는 배변 유무를 바탕으로 한 실험적 모델의 방향성 표기입니다. 실제 변비 발생 확률이나 생활 습관의 인과적 영향은 아닙니다.</p>${factorAnalysis(t.w,r,s)}`;
+}
+function renderWeights(){
+ const d=$('date').value||today(),t=modelForDate(d),latest=trained();
+ // 현재 모델의 전체 누적 가중치와 선택 날짜에 실제 적용할 가중치를 구분합니다.
+ const shown=t.error?latest.w:t.w;
+ $('weightRows').innerHTML=LABELS.map((l,i)=>`<tr><td>${esc(l)}</td><td>${BASE[i].toFixed(3)}</td><td><b>${shown[i].toFixed(3)}</b></td></tr>`).join('');
+ $('weightInfo').textContent=t.error?`현재 선택 날짜에는 모델 판단이 보류됨. 전체 기록 기준 누적 학습 ${latest.labeled}쌍 / 가중치 갱신 ${latest.updates}회. ${t.error}`:`${d} 판단에 사용되는 가중치(전날까지 학습) · 학습 ${t.labeled}쌍 · 갱신 ${t.updates}회 · 학습률 1`;
+ predict();
+}
+function loadDate(date){$('date').value=date;const r=records[date];if(r&&hasFeatures(r)){for(const k of ['water','veg','fruit','sleep','exercise'])$(k).value=String(r[k]);$('bowel').value=(r.bowel===0||r.bowel===1)?String(r.bowel):'';$('memo').value=r.memo??''}else{$('water').value='1.5';$('veg').value='0';$('fruit').value='0';$('sleep').value='0.3';$('exercise').value='0';$('bowel').value=(r&&(r.bowel===0||r.bowel===1))?String(r.bowel):'';$('memo').value=r?.memo??''}predict();$('saveMsg').textContent=r?(hasFeatures(r)?'저장된 기록 불러옴':'⚠ 이전 버전 기록입니다. 새 기준에 맞게 생활 습관을 다시 선택하고 저장해야 학습에 사용됩니다.'):'새 기록'}
+function renderCalendar(){
+  const y=month.getFullYear(),m=month.getMonth();$('monthLabel').textContent=`${y}년 ${m+1}월`;
+  const grid=$('calendarGrid');grid.innerHTML=['일','월','화','수','목','금','토'].map(d=>`<div class="calhead">${d}</div>`).join('');
+  const start=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<start;i++)grid.insertAdjacentHTML('beforeend','<div class="day blank"></div>');
+  let n=0,yes=0,no=0;
+  for(let day=1;day<=days;day++){
+    const date=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,r=records[date],el=document.createElement('div');
+    el.className='day'+(r?' has':'');
+    const t=modelForDate(date);const predicted=r&&hasFeatures(r)&&!t.error?(score(t.w,r)>=0?'높이는 방향':'낮추는 방향'):'분석 보류';
+    el.innerHTML=`<strong>${day}</strong>${r?`<small>실제 배변: ${r.bowel===1?'함':r.bowel===0?'안 함':'미입력'}</small><small>모델 판단: ${predicted}</small>`:''}`;
+    if(r){n++;if(r.bowel===1)yes++;if(r.bowel===0)no++}
+    el.addEventListener('click',()=>{loadDate(date);showTab('record')});grid.append(el)
+  }
+  $('monthSummary').textContent=`기록 ${n}일 · 실제 배변함 ${yes}일 · 배변하지 않음 ${no}일 · 미입력 ${n-yes-no}일`;
+}
+function refresh(){if(!me)return;renderWeights();renderCalendar()}
+function showTab(name){tab=name;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.section').forEach(s=>s.classList.toggle('show',s.id===name));if(name==='calendar')renderCalendar();if(name==='weights')renderWeights();if(name==='probiotic')renderDoses()}
+for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>showTab(b.dataset.tab));for(const id of ['water','veg','fruit','sleep','exercise']){ $(id).addEventListener('change',predict);$(id).addEventListener('input',predict); }$('date').addEventListener('change',()=>loadDate($('date').value));$('prev').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('next').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};
+$('doseAt').value=datetimeInputValue();$('doseSelect').addEventListener('change',renderDoses);
+if(!firebaseConfig.apiKey||!firebaseConfig.projectId||ADMIN_UID==='REPLACE_WITH_ADMIN_UID'){$('setup').classList.remove('hidden')}else{
+const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);setPersistence(auth,browserLocalPersistence).catch(console.error);
+$('loginBtn').onclick=async()=>{const id=$('loginId').value.trim(),pw=$('loginPw').value;$('loginMsg').textContent='';if(!validId(id)&&!(id.includes('@')&&id.length<255)){$('loginMsg').textContent='사용자 아이디 또는 관리자 이메일을 입력해 줘.';return}try{await signInWithEmailAndPassword(auth,id.includes('@')?id:email(id),pw)}catch(e){$('loginMsg').textContent='로그인 실패: 아이디 또는 비밀번호를 확인해 줘.'}};
+$('logout').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{if(unsubRecord){unsubRecord();unsubRecord=null}if(unsubProfile){unsubProfile();unsubProfile=null}if(unsubUsers){unsubUsers();unsubUsers=null}if(unsubDose){unsubDose();unsubDose=null}me=u;records={};doses={};profile={};$('app').classList.toggle('hidden',!u);$('login').classList.toggle('hidden',!!u);if(!u)return;const admin=u.uid===ADMIN_UID;$('adminTab').classList.toggle('hidden',!admin);$('currentUser').textContent=`${u.email?.split('@')[0]||'사용자'}${admin?' · 관리자':''}`;if(!admin&&tab==='admin')showTab('record');$('date').value=today();unsubProfile=onSnapshot(doc(db,'users',u.uid),s=>{profile=s.data()||{};refresh()},e=>console.error(e));unsubDose=onSnapshot(collection(db,'users',u.uid,'probioticDoses'),s=>{doses={};s.forEach(d=>doses[d.id]=d.data());renderDoses()},e=>{$('doseMsg').textContent='유산균 기록 동기화 실패: '+e.message});unsubRecord=onSnapshot(collection(db,'users',u.uid,'records'),s=>{records={};s.forEach(d=>records[d.id]=d.data());loadDate($('date').value||today());refresh()},e=>{$('saveMsg').textContent='동기화 실패: '+e.message});if(admin){unsubUsers=onSnapshot(collection(db,'users'),s=>{$('userList').innerHTML=s.docs.map(d=>`<div>${esc(d.data().username??d.id)} ${d.id===ADMIN_UID?'(관리자)':''}</div>`).join('')},e=>{$('adminMsg').textContent='목록 읽기 실패: '+e.message})}});
+$('doseSave').onclick=async()=>{
+ if(!me)return;
+ const at=$('doseAt').value,atMs=new Date(at).getTime(),count=Number($('doseCount').value);
+ if(!at||!Number.isFinite(atMs)||!Number.isFinite(count)||count<=0||count>1e17){$('doseMsg').textContent='섭취 날짜와 양수인 균수(최대 1e17)를 입력해 줘.';return}
+ if(atMs>Date.now()+60000){$('doseMsg').textContent='미래 섭취 시각은 저장할 수 없습니다.';return}
+ const btn=$('doseSave');btn.disabled=true;
+ try{const id=`d${atMs}_${Math.random().toString(36).slice(2,9)}`;await setDoc(doc(db,'users',me.uid,'probioticDoses',id),{atMs,count,createdAt:serverTimestamp()});$('doseMsg').textContent='섭취 기록 클라우드 저장 완료'}catch(e){$('doseMsg').textContent='저장 실패: '+e.message+' · Firestore 보안 규칙에 probioticDoses 경로를 추가했는지 확인해 줘.'}finally{btn.disabled=false}
+};
+$('save').onclick=async()=>{const date=$('date').value;if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;if(date>today()){$('saveMsg').textContent='미래 날짜에는 실제 배변 여부를 기록할 수 없어요.';return}try{const r=values();if(!Number.isFinite(r.water)||r.water<0||r.water>5){$('saveMsg').textContent='물 섭취량은 0~5L 숫자로 입력해 줘.';return}if(!hasFeatures(r)){$('saveMsg').textContent='생활 습관 항목을 모두 올바르게 입력해 줘.';return}const t=modelForDate(date);const predictionScore=t.error?null:score(t.w,r);$('save').disabled=true;await setDoc(doc(db,'users',me.uid,'records',date),{...r,date,predictionScore,predictionDirection:predictionScore===null?null:(predictionScore>=0?'higher':'lower'),predictionTargetDate:date,updatedAt:serverTimestamp()});$('saveMsg').textContent='클라우드 저장 완료'}catch(e){$('saveMsg').textContent='저장 실패: '+e.message}finally{$('save').disabled=false}};
+$('delete').onclick=async()=>{const date=$('date').value;if(!records[date]||!confirm(`${date} 기록을 삭제할까?`))return;try{await deleteDoc(doc(db,'users',me.uid,'records',date));$('saveMsg').textContent='삭제 완료'}catch(e){$('saveMsg').textContent='삭제 실패: '+e.message}};
+$('createUser').onclick=async()=>{if(me.uid!==ADMIN_UID)return;const id=$('newId').value.trim().toLowerCase(),pw=$('newPw').value;if(!validId(id)||id==='admin'||pw.length<6){$('adminMsg').textContent='아이디 3~32자(영문/숫자/_/-), 비밀번호 6자 이상 필요';return}const b=$('createUser');b.disabled=true;let secondary;try{secondary=initializeApp(firebaseConfig,'create-'+Date.now());const secondaryAuth=getAuth(secondary);const credential=await createUserWithEmailAndPassword(secondaryAuth,email(id),pw);await setDoc(doc(db,'users',credential.user.uid),{username:id,createdAt:serverTimestamp()});await signOut(secondaryAuth);$('adminMsg').textContent=`${id} 계정 등록 완료`; $('newId').value='';$('newPw').value=''}catch(e){$('adminMsg').textContent='등록 실패: '+e.message+' (인증 계정만 생성된 경우 Firebase 콘솔 확인 필요)'}finally{if(secondary)await deleteApp(secondary).catch(()=>{});b.disabled=false}};
+}
+</script></body></html>
